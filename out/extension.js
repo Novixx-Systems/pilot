@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.activate = void 0;
-// NovixxPilot is a VSCode extension that is a worse version of Co Pilot, but it's free and not AI.
+// NovixxPilot is a VSCode extension that is a worse (and probably less efficient) version of Co Pilot, but it's free and not AI.
 const vscode = require("vscode");
 /* eslint-disable no-mixed-spaces-and-tabs */
 function activate(context) {
@@ -20,7 +20,7 @@ function activate(context) {
                     new vscode.CompletionItem('\nconsole.log', vscode.CompletionItemKind.Method),
                 ];
             }
-            else if (comment.toLowerCase() === 'stolen from ') { // This is a joke
+            else if (comment.toLowerCase() === 'stolen from') { // This is a joke
                 return [
                     new vscode.CompletionItem('StackOverflow', vscode.CompletionItemKind.Method),
                 ];
@@ -40,40 +40,24 @@ function activate(context) {
                 let variable1;
                 let variable2;
                 let type;
-                if (comment.includes("==")) {
-                    type = "equal";
-                    variable1 = comment.substring(3, comment.indexOf("==") - 1);
-                    variable2 = comment.substring(comment.indexOf("==") + 3);
+                const equals = ["==", " is the same as ", " is equal to ", " is "];
+                const notEquals = ["!=", " is not the same as ", " is not equal to ", " is not "];
+                // Check if the comment contains any of the equals or not equals strings/symbols
+                for (let i = 0; i < equals.length; i++) {
+                    if (comment.includes(equals[i])) {
+                        variable1 = comment.substring(comment.indexOf("if ") + 3, comment.indexOf(equals[i]));
+                        variable2 = comment.substring(comment.indexOf(equals[i]) + equals[i].length);
+                        type = "equal";
+                        break;
+                    }
                 }
-                else if (comment.includes(" is the same as ")) {
-                    type = "equal";
-                    variable1 = comment.substring(3, comment.indexOf(" is the same as ") - 1);
-                    variable2 = comment.substring(comment.indexOf(" is the same as ") + 17);
-                }
-                else if (comment.includes(" is equal to ")) {
-                    type = "equal";
-                    variable1 = comment.substring(3, comment.indexOf(" is equal to ") - 1);
-                    variable2 = comment.substring(comment.indexOf(" is equal to ") + 14);
-                }
-                else if (comment.includes(" is ")) {
-                    type = "equal";
-                    variable1 = comment.substring(3, comment.indexOf(" is ") - 1);
-                    variable2 = comment.substring(comment.indexOf(" is ") + 4);
-                }
-                else if (comment.includes(" != ")) {
-                    type = "not equal";
-                    variable1 = comment.substring(3, comment.indexOf(" != ") - 1);
-                    variable2 = comment.substring(comment.indexOf(" != ") + 4);
-                }
-                else if (comment.includes(" is not the same as ")) {
-                    type = "not equal";
-                    variable1 = comment.substring(3, comment.indexOf(" is not the same as ") - 1);
-                    variable2 = comment.substring(comment.indexOf(" is not the same as ") + 21);
-                }
-                else if (comment.includes(" is not ")) {
-                    type = "not equal";
-                    variable1 = comment.substring(3, comment.indexOf(" is not ") - 1);
-                    variable2 = comment.substring(comment.indexOf(" is not ") + 8);
+                for (let i = 0; i < notEquals.length; i++) {
+                    if (comment.includes(notEquals[i])) {
+                        variable1 = comment.substring(comment.indexOf("if ") + 3, comment.indexOf(notEquals[i]));
+                        variable2 = comment.substring(comment.indexOf(notEquals[i]) + notEquals[i].length);
+                        type = "not equal";
+                        break;
+                    }
                 }
                 if (variable1?.includes(" length of ")) {
                     variable1 = variable1.substring(variable1.indexOf(" length of ") + 11) + ".length";
@@ -98,6 +82,19 @@ function activate(context) {
                         new vscode.CompletionItem('\nif (' + variable1 + (type === "equal" ? " === " : " !== ") + variable2 + ') {\n\tconsole.log(' + then + ');\n}', vscode.CompletionItemKind.Method),
                     ];
                 }
+            }
+            // variable generation
+            else if (comment.toLowerCase().startsWith("variable:") || comment.toLowerCase().startsWith("var:")) {
+                let variable;
+                if (comment.toLowerCase().startsWith("variable:")) {
+                    variable = comment.substring(9);
+                }
+                else {
+                    variable = comment.substring(4);
+                }
+                return [
+                    new vscode.CompletionItem('\nlet ' + variable + ';', vscode.CompletionItemKind.Method),
+                ];
             }
         }
     }, ' ' // triggered whenever a ' ' is being typed
